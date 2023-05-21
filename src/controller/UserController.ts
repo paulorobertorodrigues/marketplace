@@ -17,7 +17,7 @@ export const createUser = async (req: Request, res: Response) => {
             name: accessName
         }
     })
-    if(!isAccessName) {
+    if (!isAccessName) {
         return res.status(400).json({ message: "Este nivél de acesso não existe!" });
     }
 
@@ -29,22 +29,34 @@ export const createUser = async (req: Request, res: Response) => {
 
     const user = await prisma.user.create({
         data: {
-            name, email, password: hashPassword, Access: {
-                connect: {
-                    name: accessName
-            }
-        }},
-        select: {
-            id: true,
-            name: true,
-            email:true,
-            Access:{
-                select:{
-                    name:true,
+            name,
+            email,
+            password: hashPassword,
+            userAccess: {
+                create: {
+                    Access: {
+                        connect: {
+                            name: accessName
+                        }
+                    }
                 }
             }
-        }
-    });
+        },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                userAccess: {
+                    select: {
+                        Access: {
+                            select: {
+                                name: true,
+                            }
+                        }
+                    }
+                }
+            }
+        })
     return res.json(user);
 
 };
@@ -53,4 +65,25 @@ export const deleteManyUser = async (req: Request, res: Response) => {
 
     await prisma.user.deleteMany();
     return res.json({ message: "Usuarios deletados" });
+}
+
+export const getAllUser = async (req: Request, res: Response) => {
+    const users = await prisma.user.findMany({
+        select:{
+            id: true,
+            name: true,
+            email:true,
+            userAccess:{
+                select:{
+                    Access:{
+                        select:{
+                            name:true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return res.json(users);
 }
